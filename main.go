@@ -19,19 +19,19 @@ import (
 
 var (
 	lastTemperatureGauge = promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "last_temperature",
+		Name: "dht_last_temperature",
 		Help: "Last measured temperature by DHT sensor",
 	})
 	lastHumidityGauge = promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "last_humidity",
+		Name: "dht_last_humidity",
 		Help: "Last measured humidity by DHT sensor",
 	})
 	last_successful_measurement_seconds = promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "last_successful_measurement_seconds",
+		Name: "dht_last_successful_measurement_seconds",
 		Help: "Number of seconds that passed from the last successfully measurement",
 	})
 	last_measurement_retries = promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "last_measurement_retries",
+		Name: "dht_last_measurement_retries",
 		Help: "Number of retries by DHT sensor since it got values",
 	})
 )
@@ -68,13 +68,12 @@ func recordMetrics() {
 		lastHumidityGauge.Set(float64(humidity))
 		last_measurement_retries.Set(float64(retried))
 
-		time.Sleep(opts.ReadSeconds * time.Second)
+		time.Sleep(opts.ReadSeconds)
 	}
 }
 
 func main() {
 	if _, err := flags.Parse(&opts); err != nil {
-		//log.Fatalf("ERR: %v", err)
 		os.Exit(1)
 	}
 
@@ -86,6 +85,7 @@ func main() {
 	http.Handle("/metrics", promhttp.Handler())
 
 	go func() {
+		log.Printf("Starting HTTP server on %s ...", opts.ListenAddr)
 		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("HTTP server error: %v", err)
 		}
