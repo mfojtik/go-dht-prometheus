@@ -34,6 +34,12 @@ var (
 		Name:      "last_vapor_pressure_deficit",
 		Help:      "Last vapor deficit value",
 	})
+
+	lastDewPointGauge = promauto.NewGauge(prometheus.GaugeOpts{
+		Namespace: "dht",
+		Name:      "last_dew_point",
+		Help:      "Last dew point value",
+	})
 	last_successful_measurement_seconds = promauto.NewGauge(prometheus.GaugeOpts{
 		Namespace: "dht",
 		Name:      "last_successful_measurement_seconds",
@@ -72,6 +78,8 @@ func recordMetrics() {
 		)
 		if err != nil {
 			log.Infof("ERROR: DHT sensor reported: %v", err)
+			time.Sleep(opts.ReadSeconds)
+			continue
 		}
 
 		temperature64 := float64(temperature)
@@ -94,6 +102,18 @@ func recordMetrics() {
 
 		time.Sleep(opts.ReadSeconds)
 	}
+}
+
+func dewPoint(temperature, humidity float64) float64 {
+	// Constants for the dew point calculation
+	a := 17.27
+	b := 237.7
+
+	// Calculate intermediate values
+	alpha := ((a * temperature) / (b + temperature)) + math.Log(humidity/100.0)
+	dewPoint := (b * alpha) / (a - alpha)
+
+	return dewPoint
 }
 
 func main() {
