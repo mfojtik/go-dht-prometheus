@@ -101,10 +101,7 @@ func main() {
 	if _, err := flags.Parse(&opts); err != nil {
 		os.Exit(1)
 	}
-	if len(opts.Verbose) != 0 {
-		logger.ChangePackageLogLevel("dht", logger.InfoLevel)
-	}
-	log.Debugf("opts: %#v", opts)
+	logger.ChangePackageLogLevel("dht", logger.InfoLevel)
 
 	server := &http.Server{
 		Addr: opts.ListenAddr,
