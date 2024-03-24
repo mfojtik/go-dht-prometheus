@@ -79,6 +79,8 @@ func recordMetrics() {
 }
 
 func main() {
+	logger.ChangePackageLogLevel("dht", logger.InfoLevel)
+	defer logger.FinalizeLogger()
 	if _, err := flags.Parse(&opts); err != nil {
 		os.Exit(1)
 	}
