@@ -80,9 +80,9 @@ func recordMetrics() {
 		ea := humidity64 / 100 * es
 		// this equation returns a negative value (in kPa), which while technically correct,
 		// is invalid in this case because we are talking about a deficit.
-		lastVaporPressureDeficitGauge.Set((ea - es) * -1)
+		vpd := (ea - es) * -1
 
-		log.Infof("DHT: %.2f C, %.2f%%", temperature, humidity)
+		log.Infof("DHT: %.2f°C, %.2f%%, VPD: %.2f", temperature, humidity, vpd)
 
 		// record amount of seconds since the last successful measurement
 		last_successful_measurement_seconds.Set(float64(time.Now().Unix() - last_measurement_time.Unix()))
@@ -90,6 +90,7 @@ func recordMetrics() {
 		lastTemperatureGauge.Set(float64(temperature))
 		lastHumidityGauge.Set(float64(humidity))
 		last_measurement_retries.Set(float64(retried))
+		lastVaporPressureDeficitGauge.Set(vpd)
 
 		time.Sleep(opts.ReadSeconds)
 	}
@@ -100,7 +101,7 @@ func main() {
 	if _, err := flags.Parse(&opts); err != nil {
 		os.Exit(1)
 	}
-	if !len(opts.Verbose) > 0 {
+	if len(opts.Verbose) != 0 {
 		logger.ChangePackageLogLevel("dht", logger.InfoLevel)
 	}
 
