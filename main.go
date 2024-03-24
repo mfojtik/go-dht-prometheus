@@ -68,7 +68,7 @@ func recordMetrics() {
 		lastHumidityGauge.Set(float64(humidity))
 		last_measurement_retries.Set(float64(retried))
 
-		time.Sleep(opts.readSeconds)
+		time.Sleep(opts.readSeconds * time.Second)
 	}
 }
 
