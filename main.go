@@ -43,7 +43,7 @@ var opts struct {
 	SensorPIN        uint          `long:"sensor-pin" description:"DHT sensor PIN" default:"4"`
 	SensorMaxRetries uint          `long:"sensor-max-retries" description:"maximum sensor retries" default:"5"`
 	ListenAddr       string        `short:"l" long:"listen-addr" description:"listen address:port" required:"true" default:":2112"`
-	ReadSeconds      time.Duration `long:"interval" description:"interval between measurements" default:"5"`
+	ReadSeconds      time.Duration `long:"interval" description:"interval between measurements" default:"5s"`
 }
 
 func recordMetrics() {
@@ -59,7 +59,7 @@ func recordMetrics() {
 			log.Printf("ERROR: DHT sensor reported: %v", err)
 		}
 
-		log.Printf("DHT: %.2 C, %.2%%", temperature, humidity)
+		log.Printf("DHT: %.2f C, %.2f%%", temperature, humidity)
 
 		// record amount of seconds since the last successful measurement
 		last_successful_measurement_seconds.Set(float64(time.Now().Unix() - last_measurement_time.Unix()))
