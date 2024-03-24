@@ -91,7 +91,7 @@ func recordMetrics() {
 
 		dewPoint := dewPoint(temperature64, humidity64)
 
-		log.Infof("DHT: %.2f°C, %.2f%%, VPD: %.2f, DP: %.2f", temperature, humidity, vpd, dewPoint)
+		log.Infof("DHT: %.2f°C, %.2f%%, VPD: %.2f, DP: %.2f°C", temperature, humidity, vpd, dewPoint)
 
 		// record amount of seconds since the last successful measurement
 		last_successful_measurement_seconds.Set(float64(time.Now().Unix() - last_measurement_time.Unix()))
