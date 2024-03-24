@@ -1,4 +1,4 @@
-package go_dht_prometheus
+package main
 
 import (
 	"fmt"
