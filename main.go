@@ -34,7 +34,6 @@ var (
 		Name:      "last_vapor_pressure_deficit",
 		Help:      "Last vapor deficit value",
 	})
-
 	lastDewPointGauge = promauto.NewGauge(prometheus.GaugeOpts{
 		Namespace: "dht",
 		Name:      "last_dew_point",
@@ -90,7 +89,9 @@ func recordMetrics() {
 		// is invalid in this case because we are talking about a deficit.
 		vpd := (ea - es) * -1
 
-		log.Infof("DHT: %.2f°C, %.2f%%, VPD: %.2f", temperature, humidity, vpd)
+		dewPoint := dewPoint(temperature64, humidity64)
+
+		log.Infof("DHT: %.2f°C, %.2f%%, VPD: %.2f, DP: %.2f", temperature, humidity, vpd, dewPoint)
 
 		// record amount of seconds since the last successful measurement
 		last_successful_measurement_seconds.Set(float64(time.Now().Unix() - last_measurement_time.Unix()))
@@ -99,6 +100,7 @@ func recordMetrics() {
 		lastHumidityGauge.Set(float64(humidity))
 		last_measurement_retries.Set(float64(retried))
 		lastVaporPressureDeficitGauge.Set(vpd)
+		lastDewPointGauge.Set(dewPoint)
 
 		time.Sleep(opts.ReadSeconds)
 	}
