@@ -104,6 +104,7 @@ func main() {
 	if len(opts.Verbose) != 0 {
 		logger.ChangePackageLogLevel("dht", logger.InfoLevel)
 	}
+	log.Debugf("opts: %#v", opts)
 
 	server := &http.Server{
 		Addr: opts.ListenAddr,
