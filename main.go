@@ -39,11 +39,11 @@ var (
 var opts struct {
 	Verbose []bool `short:"v" long:"verbose" description:"Show verbose debug information"`
 
-	sensorType       int           `long:"sensor-type" default:"3"`
-	sensorPIN        int           `long:"sensor-pin" default:"4"`
-	sensorMaxRetries int           `long:"sensor-max-retries" default:"5"`
-	listenAddr       string        `long:"listen-addr" required:"true" default:":2112"`
-	readSeconds      time.Duration `long:"interval" default:"5"`
+	sensorType       uint          `long:"sensor-type" description:"DHT sensor type" default:"3"`
+	sensorPIN        uint          `long:"sensor-pin" description:"DHT sensor PIN" default:"4"`
+	sensorMaxRetries uint          `long:"sensor-max-retries" description:"maximum sensor retries" default:"5"`
+	listenAddr       string        `short:"l" long:"listen-addr" description:"listen address:port" required:"true" default:":2112"`
+	readSeconds      time.Duration `long:"interval" description:"interval between measurements" default:"5"`
 }
 
 func recordMetrics() {
@@ -51,9 +51,9 @@ func recordMetrics() {
 	for {
 		temperature, humidity, retried, err := dht.ReadDHTxxWithRetry(
 			dht.SensorType(opts.sensorType),
-			opts.sensorPIN,
+			int(opts.sensorPIN),
 			false,
-			opts.sensorMaxRetries,
+			int(opts.sensorMaxRetries),
 		)
 		if err != nil {
 			log.Printf("ERROR: DHT sensor reported: %v", err)
