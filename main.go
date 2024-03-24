@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"errors"
-	"log"
+	//"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/d2r2/go-dht"
+	"github.com/d2r2/go-logger"
 	"github.com/jessevdk/go-flags"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -46,6 +47,11 @@ var opts struct {
 	ReadSeconds      time.Duration `long:"interval" description:"interval between measurements" default:"5s"`
 }
 
+var log = logger.NewPackageLogger("dht",
+	//logger.DebugLevel,
+	logger.InfoLevel,
+)
+
 func recordMetrics() {
 	last_measurement_time := time.Now()
 	for {
@@ -56,10 +62,10 @@ func recordMetrics() {
 			int(opts.SensorMaxRetries),
 		)
 		if err != nil {
-			log.Printf("ERROR: DHT sensor reported: %v", err)
+			log.Infof("ERROR: DHT sensor reported: %v", err)
 		}
 
-		log.Printf("DHT: %.2f C, %.2f%%", temperature, humidity)
+		log.Infof("DHT: %.2f C, %.2f%%", temperature, humidity)
 
 		// record amount of seconds since the last successful measurement
 		last_successful_measurement_seconds.Set(float64(time.Now().Unix() - last_measurement_time.Unix()))
@@ -85,11 +91,11 @@ func main() {
 	http.Handle("/metrics", promhttp.Handler())
 
 	go func() {
-		log.Printf("Starting HTTP server on %s ...", opts.ListenAddr)
+		log.Infof("Starting HTTP server on %s ...", opts.ListenAddr)
 		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("HTTP server error: %v", err)
 		}
-		log.Println("Stopped serving new connections.")
+		log.Infof("Stopped serving new connections.")
 	}()
 
 	sigChan := make(chan os.Signal, 1)
@@ -102,5 +108,4 @@ func main() {
 	if err := server.Shutdown(shutdownCtx); err != nil {
 		log.Fatalf("HTTP shutdown error: %v", err)
 	}
-	log.Println("Graceful shutdown complete.")
 }
