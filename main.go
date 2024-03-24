@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"errors"
-	//"log"
+	"math"
 	"net/http"
 	"os"
 	"os/signal"
@@ -20,20 +20,29 @@ import (
 
 var (
 	lastTemperatureGauge = promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "dht_last_temperature",
-		Help: "Last measured temperature by DHT sensor",
+		Namespace: "dht",
+		Name:      "last_temperature",
+		Help:      "Last measured temperature by DHT sensor",
 	})
 	lastHumidityGauge = promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "dht_last_humidity",
-		Help: "Last measured humidity by DHT sensor",
+		Namespace: "dht",
+		Name:      "last_humidity",
+		Help:      "Last measured humidity by DHT sensor",
+	})
+	lastVaporPressureDeficitGauge = promauto.NewGauge(prometheus.GaugeOpts{
+		Namespace: "dht",
+		Name:      "last_vapor_pressure_deficit",
+		Help:      "Last vapor deficit value",
 	})
 	last_successful_measurement_seconds = promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "dht_last_successful_measurement_seconds",
-		Help: "Number of seconds that passed from the last successfully measurement",
+		Namespace: "dht",
+		Name:      "last_successful_measurement_seconds",
+		Help:      "Number of seconds that passed from the last successfully measurement",
 	})
 	last_measurement_retries = promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "dht_last_measurement_retries",
-		Help: "Number of retries by DHT sensor since it got values",
+		Namespace: "dht",
+		Name:      "last_measurement_retries",
+		Help:      "Number of retries by DHT sensor since it got values",
 	})
 )
 
@@ -44,7 +53,7 @@ var opts struct {
 	SensorPIN        uint          `long:"sensor-pin" description:"DHT sensor PIN" default:"4"`
 	SensorMaxRetries uint          `long:"sensor-max-retries" description:"maximum sensor retries" default:"5"`
 	ListenAddr       string        `short:"l" long:"listen-addr" description:"listen address:port" required:"true" default:":2112"`
-	ReadSeconds      time.Duration `long:"interval" description:"interval between measurements" default:"5s"`
+	ReadSeconds      time.Duration `long:"interval" description:"interval between measurements" default:"15s"`
 }
 
 var log = logger.NewPackageLogger("dht",
@@ -65,6 +74,14 @@ func recordMetrics() {
 			log.Infof("ERROR: DHT sensor reported: %v", err)
 		}
 
+		temperature64 := float64(temperature)
+		humidity64 := float64(humidity)
+		es := 0.6108 * math.Exp(17.27*temperature64/(temperature64+237.3))
+		ea := humidity64 / 100 * es
+		// this equation returns a negative value (in kPa), which while technically correct,
+		// is invalid in this case because we are talking about a deficit.
+		lastVaporPressureDeficitGauge.Set((ea - es) * -1)
+
 		log.Infof("DHT: %.2f C, %.2f%%", temperature, humidity)
 
 		// record amount of seconds since the last successful measurement
@@ -79,10 +96,12 @@ func recordMetrics() {
 }
 
 func main() {
-	logger.ChangePackageLogLevel("dht", logger.InfoLevel)
 	defer logger.FinalizeLogger()
 	if _, err := flags.Parse(&opts); err != nil {
 		os.Exit(1)
+	}
+	if !len(opts.Verbose) > 0 {
+		logger.ChangePackageLogLevel("dht", logger.InfoLevel)
 	}
 
 	server := &http.Server{
