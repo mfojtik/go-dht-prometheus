@@ -37,6 +37,8 @@ var (
 )
 
 var opts struct {
+	Verbose []bool `short:"v" long:"verbose" description:"Show verbose debug information"`
+
 	sensorType       int           `long:"sensor-type" default:"3"`
 	sensorPIN        int           `long:"sensor-pin" default:"4"`
 	sensorMaxRetries int           `long:"sensor-max-retries" default:"5"`
