@@ -39,21 +39,21 @@ var (
 var opts struct {
 	Verbose []bool `short:"v" long:"verbose" description:"Show verbose debug information"`
 
-	sensorType       uint          `long:"sensor-type" description:"DHT sensor type" default:"3"`
-	sensorPIN        uint          `long:"sensor-pin" description:"DHT sensor PIN" default:"4"`
-	sensorMaxRetries uint          `long:"sensor-max-retries" description:"maximum sensor retries" default:"5"`
-	listenAddr       string        `short:"l" long:"listen-addr" description:"listen address:port" required:"true" default:":2112"`
-	readSeconds      time.Duration `long:"interval" description:"interval between measurements" default:"5"`
+	SensorType       uint          `long:"sensor-type" description:"DHT sensor type" default:"3"`
+	SensorPIN        uint          `long:"sensor-pin" description:"DHT sensor PIN" default:"4"`
+	SensorMaxRetries uint          `long:"sensor-max-retries" description:"maximum sensor retries" default:"5"`
+	ListenAddr       string        `short:"l" long:"listen-addr" description:"listen address:port" required:"true" default:":2112"`
+	ReadSeconds      time.Duration `long:"interval" description:"interval between measurements" default:"5"`
 }
 
 func recordMetrics() {
 	last_measurement_time := time.Now()
 	for {
 		temperature, humidity, retried, err := dht.ReadDHTxxWithRetry(
-			dht.SensorType(opts.sensorType),
-			int(opts.sensorPIN),
+			dht.SensorType(opts.SensorType),
+			int(opts.SensorPIN),
 			false,
-			int(opts.sensorMaxRetries),
+			int(opts.SensorMaxRetries),
 		)
 		if err != nil {
 			log.Printf("ERROR: DHT sensor reported: %v", err)
@@ -68,17 +68,18 @@ func recordMetrics() {
 		lastHumidityGauge.Set(float64(humidity))
 		last_measurement_retries.Set(float64(retried))
 
-		time.Sleep(opts.readSeconds * time.Second)
+		time.Sleep(opts.ReadSeconds * time.Second)
 	}
 }
 
 func main() {
 	if _, err := flags.Parse(&opts); err != nil {
-		log.Fatalf("ERR: %v", err)
+		//log.Fatalf("ERR: %v", err)
+		os.Exit(1)
 	}
 
 	server := &http.Server{
-		Addr: opts.listenAddr,
+		Addr: opts.ListenAddr,
 	}
 
 	go recordMetrics()
